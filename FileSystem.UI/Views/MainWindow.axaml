@@ -1,0 +1,167 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:FileSystem.UI.ViewModels"
+        xmlns:models="using:FileSystem.Core.Models"
+        x:Class="FileSystem.UI.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="File System Manager"
+        Width="1100"
+        Height="800"
+        WindowStartupLocation="CenterScreen">
+    
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+    
+    <Grid Margin="15">
+        <TabControl>
+            <TabItem Header="📁 Файловая система">
+                <Grid RowDefinitions="Auto,*,Auto" Margin="10">
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10">
+                        <Button Command="{Binding CopySelectedCommand}" Padding="10,5">📋 Копировать</Button>
+                        <Button Click="OnMoveButtonClick" Padding="10,5">📁 Переместить</Button>
+                        <Button Command="{Binding DeleteSelectedCommand}" Padding="10,5">🗑 Удалить</Button>
+                        <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="#666"/>
+                    </StackPanel>
+                    
+                    <TreeView Grid.Row="1"
+                              ItemsSource="{Binding RootFolder.Children}"
+                              SelectedItem="{Binding SelectedElement}"
+                              Margin="0,10,0,10">
+                        <TreeView.ItemTemplate>
+                            <TreeDataTemplate ItemsSource="{Binding Children}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Width="30">
+                                        <TextBlock.Text>
+                                            <Binding Path="Type">
+                                                <Binding.Converter>
+                                                    <vm:ElementTypeIconConverter/>
+                                                </Binding.Converter>
+                                            </Binding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding Size, StringFormat='({0} байт)'}" Foreground="#888" FontSize="12"/>
+                                </StackPanel>
+                            </TreeDataTemplate>
+                        </TreeView.ItemTemplate>
+                    </TreeView>
+                    
+                    <Border Grid.Row="2" Background="#F5F5F5" Padding="15" CornerRadius="8">
+                        <StackPanel>
+                            <TextBlock FontWeight="Bold" Margin="0,0,0,10">Свойства элемента:</TextBlock>
+                            <TextBlock Text="{Binding SelectedElement.Name, StringFormat='Имя: {0}'}"/>
+                            <TextBlock Text="{Binding SelectedElement.Location, StringFormat='Путь: {0}'}"/>
+                            <TextBlock Text="{Binding SelectedElement.Size, StringFormat='Размер: {0} байт'}"/>
+                            <TextBlock Text="{Binding SelectedElement.Type, StringFormat='Тип: {0}'}"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="🔍 Рефлексия">
+                <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" Margin="10" 
+                      DataContext="{Binding Reflection}" 
+                      x:DataType="vm:ReflectionViewModel">
+                    
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+                        <TextBox Grid.Column="0" 
+                                 Text="{Binding LibraryPath}" 
+                                 Watermark="Путь к DLL файлу библиотеки..." 
+                                 Margin="0,0,10,0"/>
+                        <Button Grid.Column="1" 
+                                Command="{Binding LoadAssemblyCommand}" 
+                                Content="📥 Загрузить"
+                                Padding="10,5"/>
+                    </Grid>
+                    
+                    <TextBlock Grid.Row="1" 
+                               Text="{Binding StatusMessage}" 
+                               Foreground="#666" 
+                               Margin="0,0,0,10"/>
+                    
+                    <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,0,0,10">
+                        <Border Grid.Column="0" BorderBrush="#DDD" BorderThickness="1" CornerRadius="5" Margin="0,0,5,0">
+                            <Grid RowDefinitions="Auto,*">
+                                <TextBlock Grid.Row="0" Text="📦 Классы" FontWeight="Bold" Padding="10,5"/>
+                                <ListBox Grid.Row="1" 
+                                         ItemsSource="{Binding AvailableClasses}" 
+                                         SelectedItem="{Binding SelectedClass}" 
+                                         Margin="10,0,10,10"/>
+                            </Grid>
+                        </Border>
+                        
+                        <Border Grid.Column="1" BorderBrush="#DDD" BorderThickness="1" CornerRadius="5" Margin="5,0,0,0">
+                            <Grid RowDefinitions="Auto,*">
+                                <TextBlock Grid.Row="0" Text="⚙️ Методы" FontWeight="Bold" Padding="10,5"/>
+                                <ListBox Grid.Row="1" 
+                                         ItemsSource="{Binding Methods}" 
+                                         SelectedItem="{Binding SelectedMethod}" 
+                                         Margin="10,0,10,10">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:MethodWrapper">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                    
+                    <Border Grid.Row="3" BorderBrush="#DDD" BorderThickness="1" CornerRadius="5">
+                        <Grid RowDefinitions="Auto,*,Auto,Auto">
+                            <TextBlock Grid.Row="0" Text="📝 Параметры метода" FontWeight="Bold" Padding="10,5"/>
+                            
+                            <ItemsControl Grid.Row="1" 
+                                          ItemsSource="{Binding SelectedMethod.Parameters}" 
+                                          Margin="10,0,10,10">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:ParameterViewModel">
+                                        <Grid ColumnDefinitions="150,*,80" Margin="0,5">
+                                            <TextBlock Grid.Column="0" 
+                                                       Text="{Binding Name}" 
+                                                       VerticalAlignment="Center"/>
+                                            <TextBox Grid.Column="1" 
+                                                     Text="{Binding Value}" 
+                                                     Watermark="{Binding Type}" 
+                                                     Margin="5,0"/>
+                                            <TextBlock Grid.Column="2" 
+                                                       Text="{Binding Type}" 
+                                                       VerticalAlignment="Center" 
+                                                       Foreground="#888" 
+                                                       FontSize="11"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            
+                            <Button Grid.Row="2" 
+                                    Command="{Binding ExecuteMethodCommand}" 
+                                    Content="▶ Выполнить метод" 
+                                    Padding="15,5" 
+                                    Background="#4CAF50" 
+                                    Foreground="White" 
+                                    Margin="10,0,10,10"/>
+                            
+                            <Border Grid.Row="3" 
+                                    Background="#F5F5F5" 
+                                    Padding="10" 
+                                    CornerRadius="5" 
+                                    Margin="10,0,10,10" 
+                                    MinHeight="100">
+                                <ScrollViewer>
+                                    <TextBlock Text="{Binding ExecutionResult}" 
+                                               TextWrapping="Wrap" 
+                                               FontFamily="Consolas"/>
+                                </ScrollViewer>
+                            </Border>
+                        </Grid>
+                    </Border>
+                    
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>

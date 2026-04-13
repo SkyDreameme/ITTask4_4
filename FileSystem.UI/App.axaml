@@ -1,0 +1,14 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:FileSystem.UI.ViewModels"
+             x:Class="FileSystem.UI.App"
+             RequestedThemeVariant="Light">
+
+	<Application.Resources>
+		<vm:ElementTypeIconConverter x:Key="ElementTypeIconConverter"/>
+	</Application.Resources>
+
+	<Application.Styles>
+		<FluentTheme />
+	</Application.Styles>
+</Application>
